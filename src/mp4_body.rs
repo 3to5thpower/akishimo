@@ -13,29 +13,31 @@ pub struct Mp4Leaf {
 
 #[derive(Debug)]
 pub enum BoxType {
-    ftyp,
-    mdat,
-    moov,
-    stbl,
-    others,
-    error,
+    Ftyp,
+    Mdat,
+    Moov,
+    Stbl,
+    Others,
+    Error,
 }
 impl BoxType {
     pub fn from(bytes: &[u8]) -> BoxType {
         if let Ok(typ) = std::str::from_utf8(bytes) {
             match typ {
-                "ftyp" => BoxType::ftyp,
-                "mdat" => BoxType::mdat,
-                "moov" => BoxType::moov,
-                "stbl" => BoxType::stbl,
-                _ => BoxType::others,
+                "ftyp" => BoxType::Ftyp,
+                "mdat" => BoxType::Mdat,
+                "moov" => BoxType::Moov,
+                "stbl" => BoxType::Stbl,
+                _ => BoxType::Others,
             }
         } else {
-            BoxType::error
+            BoxType::Error
         }
     }
     pub fn is_leaf(&self) -> bool {
-        match self {
+        use BoxType::*;
+        match &self {
+            Mdat => true,
             _ => false,
         }
     }
@@ -43,7 +45,7 @@ impl BoxType {
 
 #[derive(Debug)]
 pub struct Mp4Container {
-    size: usize,
-    box_type: BoxType,
-    children: Vec<Mp4Box>,
+    pub size: u32,
+    pub box_type: BoxType,
+    pub children: Vec<Mp4Box>,
 }
