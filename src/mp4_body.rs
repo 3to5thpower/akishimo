@@ -6,9 +6,9 @@ pub enum Mp4Box {
 
 #[derive(Debug)]
 pub struct Mp4Leaf {
-    size: usize,
-    box_type: BoxType,
-    data: Vec<u8>,
+    pub size: u32,
+    pub box_type: BoxType,
+    pub data: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -32,6 +32,11 @@ impl BoxType {
             }
         } else {
             BoxType::error
+        }
+    }
+    pub fn is_leaf(&self) -> bool {
+        match self {
+            _ => false,
         }
     }
 }

@@ -1,5 +1,5 @@
-use crate::mp4_body::{BoxType, Mp4Box};
-use anyhow::{anyhow, bail, Result};
+use crate::mp4_body::{BoxType, Mp4Box, Mp4Leaf};
+use anyhow::{anyhow, Result};
 
 pub fn parse(content: &[u8]) -> Result<Mp4Box> {
     if content.len() < 16 {
@@ -11,9 +11,20 @@ pub fn parse(content: &[u8]) -> Result<Mp4Box> {
         size => (size, 8),
     };
 
-    let typ = BoxType::from(&content[4..8]);
+    let box_type = BoxType::from(&content[4..8]);
 
     let data = content[data_start as usize..(data_start + size) as usize].to_vec();
 
-    Ok(Mp4Box { size, typ, data })
+    Ok(Mp4Box::Leaf(Mp4Leaf {
+        size,
+        box_type,
+        data,
+    }))
+}
+
+fn is_leaf(content: &[u8]) -> Result<bool> {
+    if content.len() < 16 {
+        return Err(anyhow!("Invalid content: {:?}", content));
+    }
+    unimplemented!()
 }
