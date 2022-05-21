@@ -26,14 +26,15 @@ fn parse_box(content: &[u8]) -> Result<Mp4Box> {
 }
 
 /// BOXのサイズとdataの開始部分までのオフセットのタプルを返します
-fn read_box_size_and_data_start(data: &[u8]) -> Result<(u32, u32)> {
+fn read_box_size_and_data_start(data: &[u8]) -> Result<(u64, u64)> {
     if data.len() < 16 {
         return Err(anyhow!("Invalid content: {:?}", data));
     }
 
+
     let (size, data_start) = match u32::from_be_bytes(data[0..4].try_into().unwrap()) {
-        1 => (u32::from_be_bytes(data[8..16].try_into().unwrap()), 16),
-        size => (size, 8),
+        1 => (u64::from_be_bytes(data[8..16].try_into().unwrap()), 16),
+        size => (size as u64, 8),
     };
     Ok((size, data_start))
 }

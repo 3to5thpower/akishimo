@@ -6,7 +6,7 @@ pub enum Mp4Box {
 
 #[derive(Debug)]
 pub struct Mp4Leaf {
-    pub size: u32,
+    pub size: u64,
     pub box_type: BoxType,
     pub data: Vec<u8>,
 }
@@ -45,7 +45,7 @@ impl BoxType {
 
 #[derive(Debug)]
 pub struct Mp4Container {
-    pub size: u32,
+    pub size: u64,
     pub box_type: BoxType,
     pub children: Vec<Mp4Box>,
 }
