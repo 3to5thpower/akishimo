@@ -1,8 +1,23 @@
 use crate::mp4_body::{BoxType, Mp4Box, Mp4Container, Mp4Leaf};
 use anyhow::{anyhow, Result};
 
-pub fn parse(content: &[u8]) -> Result<Vec<Mp4Box>> {
-    parse_children(content)
+
+/// BOXの子要素になっている連続したBOXをパースします
+/// * `data` - 子要素部分のバイト列
+pub fn parse(data: &[u8]) -> Result<Vec<Mp4Box>> {
+    let mut children = vec![];
+
+    let mut data_start: usize = 0;
+    let mut content_slice = data;
+
+    while let Ok((size, _)) = read_box_size_and_data_start(content_slice) {
+        let size = size as usize;
+        children.push(parse_box(content_slice)?);
+        content_slice = &content_slice[data_start + size..];
+        data_start += size;
+    }
+
+    Ok(children)
 }
 
 fn parse_box(content: &[u8]) -> Result<Mp4Box> {
@@ -20,7 +35,7 @@ fn parse_box(content: &[u8]) -> Result<Mp4Box> {
         Ok(Mp4Box::Node(Mp4Container {
             size,
             box_type,
-            children: parse_children(&content[data_start as usize..])?,
+            children: parse(&content[data_start as usize..])?,
         }))
     }
 }
@@ -39,21 +54,3 @@ fn read_box_size_and_data_start(data: &[u8]) -> Result<(u64, u64)> {
     Ok((size, data_start))
 }
 
-/// BOXの子要素になっている連続したBOXをパースします
-/// * `data` - 子要素部分のバイト列
-/// * `data_size` - 子要素部分のみのサイズ
-fn parse_children(data: &[u8]) -> Result<Vec<Mp4Box>> {
-    let mut children = vec![];
-
-    let mut data_start: usize = 0;
-    let mut content_slice = data;
-
-    while let Ok((size, _)) = read_box_size_and_data_start(content_slice) {
-        let size = size as usize;
-        children.push(parse_box(content_slice)?);
-        content_slice = &content_slice[data_start + size..];
-        data_start += size;
-    }
-
-    Ok(children)
-}
