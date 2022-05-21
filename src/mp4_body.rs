@@ -41,6 +41,17 @@ impl BoxType {
             _ => false,
         }
     }
+    pub fn to_str(&self) -> &'static str {
+        use BoxType::*;
+        match self {
+            &Ftyp => "ftyp",
+            &Mdat => "mdat",
+            &Moov => "moov",
+            &Stbl => "stbl",
+            &Others => "others",
+            &Error => "error",
+        }
+    }
 }
 
 #[derive(Debug)]

@@ -13,7 +13,8 @@ fn main() -> Result<()> {
     }
 
     let content = read_file(&args[1])?;
-    let res = parse::parse(&content)?;
+    // let res = parse::parse(&content)?;
+    let res = parse::analyzeMp4BoxInfo(&content)?;
     println!("{:?}", res);
     Ok(())
 }
