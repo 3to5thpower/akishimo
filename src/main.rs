@@ -5,6 +5,8 @@ use std::io::Read;
 mod mp4_body;
 mod parse;
 
+use serde_json;
+
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
@@ -14,8 +16,9 @@ fn main() -> Result<()> {
 
     let content = read_file(&args[1])?;
     // let res = parse::parse(&content)?;
-    let res = parse::analyzeMp4BoxInfo(&content)?;
-    println!("{:?}", res);
+    let res = parse::analyze_mp4_box_info(&content)?;
+    let out = serde_json::to_string(&res).expect("Cannot converse json to string");
+    println!("{}", out);
     Ok(())
 }
 

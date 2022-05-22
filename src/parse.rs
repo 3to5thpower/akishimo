@@ -1,9 +1,11 @@
 use crate::mp4_body::{BoxType, Mp4Box, Mp4Container, Mp4Leaf};
 use anyhow::{anyhow, Result};
 use derive_new::new;
+use serde::{Deserialize, Serialize};
+use serde_json;
 use std::fmt;
 
-#[derive(Debug, new)]
+#[derive(Debug, new, Serialize, Deserialize)]
 pub struct Mp4BoxInfo {
     box_type: BoxType,
     start_index: usize,
@@ -13,28 +15,33 @@ pub struct Mp4BoxInfo {
 }
 impl fmt::Display for Mp4BoxInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let Mp4BoxInfo{box_type, start_index, end_index, size} = self;
-        write!(f, "file type `{}`: start is {}, end is {}, size is {}", 
-        box_type.to_str(), start_index, end_index, size)
+        let json = serde_json::to_string(&self).expect("cannnot output mp4info to json");
+        write!(f, "{}", json)
     }
 }
 
-pub fn analyzeMp4BoxInfo(content: &[u8]) -> Result<Vec<Mp4BoxInfo>> {
+pub fn analyze_mp4_box_info(content: &[u8]) -> Result<Vec<Mp4BoxInfo>> {
     let mut res = vec![];
 
     let mut index = 0;
-    let mut content_slice = content;
-    while let Ok((size, start_index)) = read_box_size_and_data_start(content_slice) {
-        let box_type = BoxType::from(&content[index+4..index+8]);
+    while let Ok((size, start_index)) = read_box_size_and_data_start(content[index..].as_ref()) {
+        let box_type = BoxType::from(&content[index + 4..index + 8]);
         let end_index = index + size;
-        res.push(Mp4BoxInfo::new(box_type, start_index, end_index, size));
-        content_slice = &content_slice[end_index..];
-        index = end_index;
+        let is_leaf = box_type.is_leaf();
+        res.push(Mp4BoxInfo::new(
+            box_type,
+            index + start_index,
+            end_index,
+            size,
+        ));
+        if is_leaf {
+            index = end_index;
+        } else {
+            index = index + start_index;
+        }
     }
     Ok(res)
 }
-
-
 
 // /// BOXの子要素になっている連続したBOXをパースします
 // /// * `data` - 子要素部分のバイト列
@@ -80,11 +87,13 @@ fn read_box_size_and_data_start(data: &[u8]) -> Result<(usize, usize)> {
         return Err(anyhow!("Invalid content: {:?}", data));
     }
 
-
-    let (size, data_start) = match usize::from_be_bytes(data[0..4].try_into().unwrap()) {
+    let (size, data_start) = match u32::from_be_bytes(
+        data[0..4]
+            .try_into()
+            .expect(format!("data is {:?}", data[0..4].as_ref()).as_str()),
+    ) {
         1 => (usize::from_be_bytes(data[8..16].try_into().unwrap()), 16),
-        size => (size, 8),
+        size => (size as usize, 8),
     };
     Ok((size, data_start))
 }
-
